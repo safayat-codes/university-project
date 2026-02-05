@@ -1,0 +1,21 @@
+#include <stdio.h>
+#include <math.h>
+#include <string.h>
+
+//  ANS memory
+double ANS = 0;
+
+//  history file
+FILE *historyFile;
+
+// save history
+void saveHistory(const char *operation, double result)
+{
+    historyFile = fopen("history.txt", "a");
+    if (historyFile == NULL)
+        return;
+
+    fprintf(historyFile, "%s = %.4lf\n", operation, result);
+    fclose(historyFile);
+}
+

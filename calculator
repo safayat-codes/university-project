@@ -1,350 +1,893 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
+#include<stdio.h>
+#include<stdlib.h>
+#include<string.h>
+#include<math.h>
+#include<complex.h>
+#include<ctype.h>
 
-// ================= GLOBALS ================= //
-double ANS = 0;
-FILE *historyFile;
+#define MAX 10
+#define PI 3.14159265358979323846
 
-// ================= HISTORY FUNCTIONS ================= //
-void saveHistory(const char *op, double result) {
-    historyFile = fopen("history.txt", "a");
-    if (!historyFile) return;
-    fprintf(historyFile, "%s = %.4lf\n", op, result);
-    fclose(historyFile);
+int getInt(){
+    int x;
+
+    while(scanf("%d",&x)!=1){
+        printf("Invalid input: ");
+
+        while(getchar()!='\n');
+    }
+
+    return x;
 }
 
-void showHistory() {
-    char line[200];
-    historyFile = fopen("history.txt", "r");
-    if (!historyFile) {
-        printf("No history found.\n");
+double getDouble(){
+
+    double x;
+
+    while(scanf("%lf",&x)!=1){
+
+        printf("Invalid input: ");
+
+        while(getchar()!='\n');
+    }
+
+    return x;
+}
+
+#define MAX_HISTORY 200
+
+char history[MAX_HISTORY][200];
+
+int historyCount=0;
+
+void addHistory(char s[]){
+
+    if(historyCount < MAX_HISTORY)
+        strcpy(history[historyCount++], s);
+}
+
+void showHistory(){
+
+    if(historyCount==0){
+
+        printf("\nNo history available.\n");
+
         return;
     }
-    printf("\n---- HISTORY ----\n");
-    while (fgets(line, sizeof(line), historyFile)) {
-        printf("%s", line);
+
+    printf("\n--- History ---\n");
+
+    for(int i=0;i<historyCount;i++)
+        printf("%d. %s\n",i+1,history[i]);
+}
+
+void clearHistory(){
+
+    historyCount=0;
+
+    printf("History cleared!\n");
+}
+
+
+
+void basicMode(){
+
+    int ch;
+    double a,b,sum,result;
+    int n;
+    char entry[200];
+
+    do{
+
+        printf("\n--- BASIC MODE ---\n");
+
+        printf("1.Add\n2.Sub\n3.Mul\n4.Div\n5.Avg\n6.Back\n");
+
+        ch=getInt();
+
+        switch(ch){
+
+            case 1:
+
+                printf("Enter two numbers: ");
+
+                a=getDouble();
+                b=getDouble();
+
+                result=a+b;
+
+                printf("= %.2lf\n",result);
+
+                sprintf(entry,"Addition: %.2lf + %.2lf = %.2lf",a,b,result);
+
+                addHistory(entry);
+
+                break;
+
+
+            case 2:
+
+                printf("Enter two numbers: ");
+
+                a=getDouble();
+                b=getDouble();
+
+                result=a-b;
+
+                printf("= %.2lf\n",result);
+
+                sprintf(entry,"Subtraction: %.2lf - %.2lf = %.2lf",a,b,result);
+
+                addHistory(entry);
+
+                break;
+
+
+            case 3:
+
+                printf("Enter two numbers: ");
+
+                a=getDouble();
+                b=getDouble();
+
+                result=a*b;
+
+                printf("= %.2lf\n",result);
+
+                sprintf(entry,"Multiplication: %.2lf * %.2lf = %.2lf",a,b,result);
+
+                addHistory(entry);
+
+                break;
+
+
+            case 4:
+
+                printf("Enter two numbers: ");
+
+                a=getDouble();
+                b=getDouble();
+
+                if(b!=0){
+
+                    result=a/b;
+
+                    printf("= %.2lf\n",result);
+
+                    sprintf(entry,"Division: %.2lf / %.2lf = %.2lf",a,b,result);
+
+                    addHistory(entry);
+                }
+
+                else{
+                    printf("Division by zero!\n");
+                }
+
+                break;
+
+
+            case 5:
+
+                printf("How many numbers: ");
+
+                n=getInt();
+
+                sum=0;
+
+                for(int i=0;i<n;i++){
+
+                    printf("Enter number: ");
+
+                    sum+=getDouble();
+                }
+
+                result=sum/n;
+
+                printf("Average = %.2lf\n",result);
+
+                sprintf(entry,"Average of %d numbers = %.2lf",n,result);
+
+                addHistory(entry);
+
+                break;
+        }
+
+    }while(ch!=6);
+}
+
+
+
+int determinant(int matrix[MAX][MAX], int n){
+
+    if(n==1)
+        return matrix[0][0];
+
+    if(n==2)
+        return matrix[0][0]*matrix[1][1]-matrix[0][1]*matrix[1][0];
+
+    int temp[MAX][MAX],det=0,sign=1;
+
+    for(int x=0;x<n;x++){
+
+        int subi=0;
+
+        for(int i=1;i<n;i++){
+
+            int subj=0;
+
+            for(int j=0;j<n;j++){
+
+                if(j==x)
+                    continue;
+
+                temp[subi][subj++]=matrix[i][j];
+            }
+
+            subi++;
+        }
+
+        det+=sign*matrix[0][x]*determinant(temp,n-1);
+
+        sign=-sign;
     }
-    fclose(historyFile);
+
+    return det;
 }
 
-void clearHistory() {
-    historyFile = fopen("history.txt", "w");
-    if (historyFile) {
-        fclose(historyFile);
-        printf("History cleared successfully.\n");
-    }
-}
 
-// ================= HELPER FUNCTIONS ================= //
-double factorial(int n) {
-    double f = 1;
-    for (int i = 1; i <= n; i++)
-        f *= i;
-    return f;
-}
 
-void quadratic(double a, double b, double c) {
-    if (a == 0) {
-        printf("Not a quadratic equation.\n");
+void matrixAddition(){
+
+    int r1,c1,r2,c2;
+
+    int A[4][4],B[4][4],C[4][4];
+
+    char entry[200];
+
+    printf("Enter rows and columns of first matrix: ");
+
+    r1=getInt();
+    c1=getInt();
+
+    printf("Enter rows and columns of second matrix: ");
+
+    r2=getInt();
+    c2=getInt();
+
+    if(r1>4 || c1>4 || r2>4 || c2>4 || r1!=r2 || c1!=c2){
+
+        printf("Error\n");
+
         return;
     }
-    double d = b*b - 4*a*c;
-    if (d > 0)
-        printf("Roots: %.4lf , %.4lf\n",
-               (-b + sqrt(d)) / (2*a),
-               (-b - sqrt(d)) / (2*a));
-    else if (d == 0)
-        printf("Root: %.4lf\n", -b / (2*a));
-    else
-        printf("Complex roots.\n");
-}
 
-// ================= MATRIX PRINT ================= //
-void printMatrix(int r, int c, int M[10][10]) {
-    for (int i=0; i<r; i++) {
-        for (int j=0; j<c; j++)
-            printf("%d ", M[i][j]);
+    printf("Enter first matrix:\n");
+
+    for(int i=0;i<r1;i++)
+        for(int j=0;j<c1;j++){
+
+            printf("a%d%d = ",i+1,j+1);
+
+            A[i][j]=getInt();
+        }
+
+    printf("Enter second matrix:\n");
+
+    for(int i=0;i<r2;i++)
+        for(int j=0;j<c2;j++){
+
+            printf("b%d%d = ",i+1,j+1);
+
+            B[i][j]=getInt();
+        }
+
+    printf("Result:\n");
+
+    for(int i=0;i<r1;i++){
+
+        for(int j=0;j<c1;j++){
+
+            C[i][j]=A[i][j]+B[i][j];
+
+            printf("%d ",C[i][j]);
+        }
+
         printf("\n");
     }
+
+    sprintf(entry,"Matrix addition performed");
+
+    addHistory(entry);
 }
 
-// ================= MAIN ================= //
-int main() {
-    int op;
 
-    do {
+
+void matrixMultiplication(){
+
+    int r1,c1,r2,c2;
+
+    int A[4][4],B[4][4],C[4][4];
+
+    char entry[200];
+
+    printf("Enter rows and columns of first matrix: ");
+
+    r1=getInt();
+    c1=getInt();
+
+    printf("Enter rows and columns of second matrix: ");
+
+    r2=getInt();
+    c2=getInt();
+
+    if(r1>4 || c1>4 || r2>4 || c2>4 || c1!=r2){
+
+        printf("Error\n");
+
+        return;
+    }
+
+    printf("Enter first matrix:\n");
+
+    for(int i=0;i<r1;i++)
+        for(int j=0;j<c1;j++){
+
+            printf("a%d%d = ",i+1,j+1);
+
+            A[i][j]=getInt();
+        }
+
+    printf("Enter second matrix:\n");
+
+    for(int i=0;i<r2;i++)
+        for(int j=0;j<c2;j++){
+
+            printf("b%d%d = ",i+1,j+1);
+
+            B[i][j]=getInt();
+        }
+
+    for(int i=0;i<r1;i++){
+
+        for(int j=0;j<c2;j++){
+
+            C[i][j]=0;
+
+            for(int k=0;k<c1;k++)
+                C[i][j]+=A[i][k]*B[k][j];
+        }
+    }
+
+    printf("Result:\n");
+
+    for(int i=0;i<r1;i++){
+
+        for(int j=0;j<c2;j++)
+            printf("%d ",C[i][j]);
+
+        printf("\n");
+    }
+
+    sprintf(entry,"Matrix multiplication performed");
+
+    addHistory(entry);
+}
+
+
+
+void matrixFunction(){
+
+    int choice;
+
+    printf("\n1.Addition\n2.Multiplication\n3.Determinant\n");
+
+    choice=getInt();
+
+    if(choice==1){
+
+        matrixAddition();
+    }
+
+    else if(choice==2){
+
+        matrixMultiplication();
+    }
+
+    else if(choice==3){
+
+        int n;
+
+        char entry[200];
+
+        printf("Matrix size: ");
+
+        n=getInt();
+
+        if(n>4){
+
+            printf("Error\n");
+
+            return;
+        }
+
+        int A[MAX][MAX];
+
+        printf("Enter matrix:\n");
+
+        for(int i=0;i<n;i++)
+            for(int j=0;j<n;j++){
+
+                printf("a%d%d = ",i+1,j+1);
+
+                A[i][j]=getInt();
+            }
+
+        int det=determinant(A,n);
+
+        printf("Determinant = %d\n",det);
+
+        sprintf(entry,"Matrix determinant (size %d) = %d",n,det);
+
+        addHistory(entry);
+    }
+
+    else{
+
+        printf("Invalid choice\n");
+    }
+}
+
+
+
+void trigonometryFunction(){
+
+    int ch;
+
+    double deg,rad,result;
+
+    char entry[200];
+
+    printf("1.Sin 2.Cos 3.Tan\n");
+
+    ch=getInt();
+
+    printf("Enter degree: ");
+
+    deg=getDouble();
+
+    rad=deg*PI/180;
+
+    if(ch==1){
+
+        result=sin(rad);
+
+        printf("= %.4lf\n",result);
+
+        sprintf(entry,"Sin(%.2lf) = %.4lf",deg,result);
+    }
+
+    if(ch==2){
+
+        result=cos(rad);
+
+        printf("= %.4lf\n",result);
+
+        sprintf(entry,"Cos(%.2lf) = %.4lf",deg,result);
+    }
+
+    if(ch==3){
+
+        result=tan(rad);
+
+        printf("= %.4lf\n",result);
+
+        sprintf(entry,"Tan(%.2lf) = %.4lf",deg,result);
+    }
+
+    addHistory(entry);
+}
+
+
+
+void decimalToBinary(int n){
+
+    int binary[50],i=0;
+
+    if(n==0){
+
+        printf("Binary = 0\n");
+
+        return;
+    }
+
+    while(n>0){
+
+        binary[i++]=n%2;
+
+        n/=2;
+    }
+
+    printf("Binary = ");
+
+    for(int j=i-1;j>=0;j--)
+        printf("%d",binary[j]);
+
+    printf("\n");
+}
+
+
+
+void decimalToOctal(int n){
+
+    printf("Octal = %o\n",n);
+}
+
+
+
+void decimalToHex(int n){
+
+    printf("Hexadecimal = %X\n",n);
+}
+
+
+
+double baseToDecimal(char num[], int base){
+
+    double result=0;
+
+    int i=0;
+
+    while(num[i]){
+
+        int value;
+
+        if(num[i]>='0' && num[i]<='9')
+            value=num[i]-'0';
+
+        else if(num[i]>='A' && num[i]<='F')
+            value=num[i]-'A'+10;
+
+        else if(num[i]>='a' && num[i]<='f')
+            value=num[i]-'a'+10;
+
+        else{
+
+            printf("Invalid input\n");
+
+            return -1;
+        }
+
+        if(value>=base){
+
+            printf("Invalid input\n");
+
+            return -1;
+        }
+
+        result=result*base+value;
+
+        i++;
+    }
+
+    return result;
+}
+
+
+
+void numberSystemFunction(){
+
+    int choice;
+
+    char num[50],entry[200];
+
+    int decimalValue;
+
+    printf("\n--- NUMBER SYSTEM CONVERTER ---\n");
+
+    printf("1.Binary\n2.Decimal\n3.Octal\n4.Hexadecimal\n");
+
+    printf("Enter the number system of your input: ");
+
+    choice=getInt();
+
+    printf("Enter the number: ");
+
+    scanf("%s",num);
+
+    switch(choice){
+
+        case 1:
+
+            decimalValue=(int)baseToDecimal(num,2);
+
+            if(decimalValue==-1)
+                return;
+
+            printf("Decimal = %d\n",decimalValue);
+
+            printf("Octal = %o\n",decimalValue);
+
+            printf("Hexadecimal = %X\n",decimalValue);
+
+            sprintf(entry,"Binary %s converted",num);
+
+            addHistory(entry);
+
+            break;
+
+
+        case 2:
+
+            decimalValue=atoi(num);
+
+            decimalToBinary(decimalValue);
+
+            decimalToOctal(decimalValue);
+
+            decimalToHex(decimalValue);
+
+            sprintf(entry,"Decimal %s converted",num);
+
+            addHistory(entry);
+
+            break;
+
+
+        case 3:
+
+            decimalValue=(int)baseToDecimal(num,8);
+
+            if(decimalValue==-1)
+                return;
+
+            decimalToBinary(decimalValue);
+
+            printf("Decimal = %d\n",decimalValue);
+
+            printf("Hexadecimal = %X\n",decimalValue);
+
+            sprintf(entry,"Octal %s converted",num);
+
+            addHistory(entry);
+
+            break;
+
+
+        case 4:
+
+            decimalValue=(int)baseToDecimal(num,16);
+
+            if(decimalValue==-1)
+                return;
+
+            decimalToBinary(decimalValue);
+
+            printf("Decimal = %d\n",decimalValue);
+
+            printf("Octal = %o\n",decimalValue);
+
+            sprintf(entry,"Hexadecimal %s converted",num);
+
+            addHistory(entry);
+
+            break;
+
+
+        default:
+
+            printf("Invalid choice\n");
+    }
+}
+
+
+
+void polynomialFunction(){
+
+    double a,b,c,d;
+
+    char entry[200];
+
+    printf("Enter a b c: ");
+
+    a=getDouble();
+    b=getDouble();
+    c=getDouble();
+
+    d=b*b-4*a*c;
+
+    if(d>=0){
+
+        double r1=(-b+sqrt(d))/(2*a);
+        double r2=(-b-sqrt(d))/(2*a);
+
+        printf("Roots: %.2lf %.2lf\n",r1,r2);
+
+        sprintf(entry,"Roots of %.2lfx^2+%.2lfx+%.2lf = %.2lf , %.2lf",a,b,c,r1,r2);
+    }
+
+    else{
+
+        printf("Complex roots\n");
+
+        sprintf(entry,"Complex roots for %.2lfx^2+%.2lfx+%.2lf",a,b,c);
+    }
+
+    addHistory(entry);
+}
+
+
+
+void factorialFunction(){
+
+    int n=getInt(),f=1;
+
+    char entry[200];
+
+    for(int i=1;i<=n;i++)
+        f*=i;
+
+    printf("Factorial = %d\n",f);
+
+    sprintf(entry,"Factorial(%d) = %d",n,f);
+
+    addHistory(entry);
+}
+
+
+
+void powerFunction(){
+
+    double a=getDouble(),b=getDouble(),res;
+
+    char entry[200];
+
+    res=pow(a,b);
+
+    printf("= %.2lf\n",res);
+
+    sprintf(entry,"Power: %.2lf^%.2lf = %.2lf",a,b,res);
+
+    addHistory(entry);
+}
+
+
+
+void logFunction(){
+
+    double x=getDouble();
+
+    char entry[200];
+
+    double ln=log(x),lg=log10(x);
+
+    printf("ln=%.3lf log10=%.3lf\n",ln,lg);
+
+    sprintf(entry,"Logs of %.2lf -> ln=%.3lf log10=%.3lf",x,ln,lg);
+
+    addHistory(entry);
+}
+
+
+
+void complexFunction(){
+
+    double a,b,c,d;
+
+    char entry[200];
+
+    printf("Enter a b c d: ");
+
+    scanf("%lf%lf%lf%lf",&a,&b,&c,&d);
+
+    double r=a+c,i=b+d;
+
+    printf("Add = %.2lf + %.2lfi\n",r,i);
+
+    sprintf(entry,"Complex add: (%.2lf+%.2lfi)+(%.2lf+%.2lfi)=(%.2lf+%.2lfi)",a,b,c,d,r,i);
+
+    addHistory(entry);
+}
+
+
+
+void sqrtFunction(){
+
+    double x=getDouble();
+
+    char entry[200];
+
+    if(x<0){
+
+        printf("Invalid input\n");
+
+        return;
+    }
+
+    double res=sqrt(x);
+
+    printf("= %.2lf\n",res);
+
+    sprintf(entry,"Sqrt(%.2lf) = %.2lf",x,res);
+
+    addHistory(entry);
+}
+
+
+
+void modulusFunction(){
+
+    int x=getInt();
+
+    char entry[200];
+
+    int res=abs(x);
+
+    printf("= %d\n",res);
+
+    sprintf(entry,"|%d| = %d",x,res);
+
+    addHistory(entry);
+}
+
+
+
+void scientificMode(){
+
+    int ch;
+
+    do{
+
+        printf("\n--- SCIENTIFIC MODE ---\n");
+
+        printf("1.Matrix\n2.Trig\n3.Number System\n4.Polynomial\n5.Factorial\n");
+        printf("6.Power\n7.Logs\n8.Complex\n9.Sqrt\n10.Modulus\n11.Back\n");
+
+        ch=getInt();
+
+        switch(ch){
+
+            case 1: matrixFunction(); break;
+            case 2: trigonometryFunction(); break;
+            case 3: numberSystemFunction(); break;
+            case 4: polynomialFunction(); break;
+            case 5: factorialFunction(); break;
+            case 6: powerFunction(); break;
+            case 7: logFunction(); break;
+            case 8: complexFunction(); break;
+            case 9: sqrtFunction(); break;
+            case 10: modulusFunction(); break;
+        }
+
+    }while(ch!=11);
+}
+
+
+
+int main(){
+
+    int ch;
+
+    do{
+
         printf("\n===== SCIENTIFIC CALCULATOR =====\n");
 
-        printf(" 1. Addition\n");
-        printf(" 2. Subtraction\n");
-        printf(" 3. Multiplication (n numbers)\n");
-        printf(" 4. Division\n");
-        printf(" 5. Square Root\n");
-        printf(" 6. Power\n");
-        printf(" 7. Sin\n");
-        printf(" 8. Cos\n");
-        printf(" 9. Tan\n");
-        printf("10. Log\n");
-        printf("11. Factorial\n");
-        printf("12. Quadratic Equation\n");
+        printf("1.Basic Mode\n2.Scientific Mode\n3.Show History\n4.Clear History\n5.Exit\n");
 
-        printf("25. Matrix Addition\n");
-        printf("26. Matrix Multiplication\n");
-        printf("27. Matrix Transpose\n");
-        printf("28. Determinant (2x2 / 3x3)\n");
-        printf("29. Inverse of Matrix (2x2)\n");
+        ch=getInt();
 
-        printf("30. Show ANS\n");
-        printf("31. Show History\n");
-        printf("32. Clear History\n");
-        printf("33. Exit\n");
+        switch(ch){
 
-        printf("Enter option: ");
-        scanf("%d", &op);
+            case 1: basicMode(); break;
+            case 2: scientificMode(); break;
+            case 3: showHistory(); break;
+            case 4: clearHistory(); break;
+            case 5: printf("Exiting...\n"); break;
 
-        switch(op) {
-
-        // ===== BASIC ===== //
-        case 1: {
-            double a,b;
-            printf("Enter two numbers: ");
-            scanf("%lf %lf",&a,&b);
-            ANS = a + b;
-            printf("Result = %.4lf\n", ANS);
-            saveHistory("Addition", ANS);
-            break;
+            default:
+                printf("Invalid choice\n");
         }
 
-        case 2: {
-            double a,b;
-            printf("Enter two numbers: ");
-            scanf("%lf %lf",&a,&b);
-            ANS = a - b;
-            printf("Result = %.4lf\n", ANS);
-            saveHistory("Subtraction", ANS);
-            break;
-        }
-
-        case 3: {
-            int n;
-            double x;
-            ANS = 1;
-            printf("How many numbers? ");
-            scanf("%d", &n);
-            printf("Enter numbers:\n");
-            for (int i=0; i<n; i++) {
-                scanf("%lf",&x);
-                ANS *= x;
-            }
-            printf("Result = %.4lf\n", ANS);
-            saveHistory("Multiplication", ANS);
-            break;
-        }
-
-        case 4: {
-            double a,b;
-            printf("Enter two numbers: ");
-            scanf("%lf %lf",&a,&b);
-            if(b==0){ printf("Division by zero!\n"); break; }
-            ANS = a / b;
-            printf("Result = %.4lf\n", ANS);
-            saveHistory("Division", ANS);
-            break;
-        }
-
-        // ===== SCIENTIFIC ===== //
-        case 5:
-            printf("Enter number: ");
-            scanf("%lf",&ANS);
-            if(ANS<0){ printf("Error! Negative number.\n"); break; }
-            ANS = sqrt(ANS);
-            printf("%.4lf\n", ANS);
-            break;
-
-        case 6: {
-            double a,b;
-            printf("Enter base and power: ");
-            scanf("%lf %lf",&a,&b);
-            ANS = pow(a,b);
-            printf("%.4lf\n", ANS);
-            break;
-        }
-
-        case 7:
-            printf("Enter angle in degrees: ");
-            scanf("%lf",&ANS);
-            ANS = sin(ANS*M_PI/180);
-            printf("%.4lf\n", ANS);
-            break;
-
-        case 8:
-            printf("Enter angle in degrees: ");
-            scanf("%lf",&ANS);
-            ANS = cos(ANS*M_PI/180);
-            printf("%.4lf\n", ANS);
-            break;
-
-        case 9:
-            printf("Enter angle in degrees: ");
-            scanf("%lf",&ANS);
-            ANS = tan(ANS*M_PI/180);
-            printf("%.4lf\n", ANS);
-            break;
-
-        case 10:
-            printf("Enter number: ");
-            scanf("%lf",&ANS);
-            if(ANS<=0){ printf("Log undefined!\n"); break; }
-            ANS = log(ANS);
-            printf("%.4lf\n", ANS);
-            break;
-
-        case 11: {
-            int n;
-            printf("Enter number: ");
-            scanf("%d",&n);
-            if(n<0){ printf("Negative factorial!\n"); break; }
-            ANS = factorial(n);
-            printf("%.0lf\n", ANS);
-            break;
-        }
-
-        case 12: {
-            double a,b,c;
-            printf("Enter a b c: ");
-            scanf("%lf %lf %lf",&a,&b,&c);
-            quadratic(a,b,c);
-            break;
-        }
-
-        // ===== MATRIX OPERATIONS ===== //
-        case 25: {  // Matrix Addition
-            int r,c,A[10][10],B[10][10];
-            printf("Enter rows & columns: ");
-            scanf("%d %d",&r,&c);
-
-            printf("Enter Matrix A (%dx%d) row by row:\n", r,c);
-            for(int i=0;i<r;i++){
-                printf("Row %d: ", i+1);
-                for(int j=0;j<c;j++)
-                    scanf("%d",&A[i][j]);
-            }
-
-            printf("Enter Matrix B (%dx%d) row by row:\n", r,c);
-            for(int i=0;i<r;i++){
-                printf("Row %d: ", i+1);
-                for(int j=0;j<c;j++)
-                    scanf("%d",&B[i][j]);
-            }
-
-            printf("Result (A+B):\n");
-            for(int i=0;i<r;i++){
-                for(int j=0;j<c;j++)
-                    printf("%d ", A[i][j]+B[i][j]);
-                printf("\n");
-            }
-            break;
-        }
-
-        case 26: {  // Matrix Multiplication
-            int r1,c1,r2,c2,A[10][10],B[10][10],C[10][10]={0};
-            printf("Enter rows & cols of A: ");
-            scanf("%d %d",&r1,&c1);
-            printf("Enter rows & cols of B: ");
-            scanf("%d %d",&r2,&c2);
-
-            if(c1!=r2){ printf("Multiplication not possible!\n"); break; }
-
-            printf("Enter Matrix A (%dx%d) row by row:\n", r1,c1);
-            for(int i=0;i<r1;i++)
-                for(int j=0;j<c1;j++)
-                    scanf("%d",&A[i][j]);
-
-            printf("Enter Matrix B (%dx%d) row by row:\n", r2,c2);
-            for(int i=0;i<r2;i++)
-                for(int j=0;j<c2;j++)
-                    scanf("%d",&B[i][j]);
-
-            // multiply
-            for(int i=0;i<r1;i++)
-                for(int j=0;j<c2;j++)
-                    for(int k=0;k<c1;k++)
-                        C[i][j]+=A[i][k]*B[k][j];
-
-            printf("Result (A*B):\n");
-            printMatrix(r1,c2,C);
-            break;
-        }
-
-        case 27: {  // Transpose
-            int r,c,A[10][10];
-            printf("Enter rows & columns: ");
-            scanf("%d %d",&r,&c);
-
-            printf("Enter Matrix (%dx%d) row by row:\n", r,c);
-            for(int i=0;i<r;i++)
-                for(int j=0;j<c;j++)
-                    scanf("%d",&A[i][j]);
-
-            printf("Transpose:\n");
-            for(int j=0;j<c;j++){
-                for(int i=0;i<r;i++)
-                    printf("%d ",A[i][j]);
-                printf("\n");
-            }
-            break;
-        }
-
-        case 28: {  // Determinant
-            int n;
-            double A[3][3],det=0;
-            printf("Enter order (2 or 3): ");
-            scanf("%d",&n);
-
-            printf("Enter Matrix (%dx%d) row by row:\n", n,n);
-            for(int i=0;i<n;i++)
-                for(int j=0;j<n;j++)
-                    scanf("%lf",&A[i][j]);
-
-            if(n==2)
-                det = A[0][0]*A[1][1] - A[0][1]*A[1][0];
-            else
-                det = A[0][0]*(A[1][1]*A[2][2]-A[1][2]*A[2][1])
-                    - A[0][1]*(A[1][0]*A[2][2]-A[1][2]*A[2][0])
-                    + A[0][2]*(A[1][0]*A[2][1]-A[1][1]*A[2][0]);
-
-            printf("Determinant = %.4lf\n",det);
-            ANS = det;
-            break;
-        }
-
-        case 29: {  // Inverse 2x2
-            double A[2][2],det;
-            printf("Enter 2x2 Matrix row by row:\n");
-            for(int i=0;i<2;i++)
-                for(int j=0;j<2;j++)
-                    scanf("%lf",&A[i][j]);
-
-            det = A[0][0]*A[1][1] - A[0][1]*A[1][0];
-            if(det==0){ printf("Inverse not possible!\n"); break; }
-
-            printf("Inverse:\n");
-            printf("%.4lf %.4lf\n", A[1][1]/det, -A[0][1]/det);
-            printf("%.4lf %.4lf\n", -A[1][0]/det, A[0][0]/det);
-            ANS = det;
-            break;
-        }
-
-        // ===== MISC ===== //
-        case 30: printf("ANS = %.4lf\n", ANS); break;
-        case 31: showHistory(); break;
-        case 32: clearHistory(); break;
-        case 33: printf("Exiting calculator...\n"); break;
-        default: printf("Invalid option!\n");
-        }
-
-    } while(op != 33);
+    }while(ch!=5);
 
     return 0;
 }
